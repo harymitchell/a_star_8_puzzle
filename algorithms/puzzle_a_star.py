@@ -1,22 +1,23 @@
 import heapq
 
-class Cell(object):
-    def __init__(self, x, y, reachable, value):
+class Board(object):
+    def __init__(self, boardState):
         """
-        Initialize new cell
+        Initialize new board
 
-        @param x cell x coordinate
-        @param y cell y coordinate
-        @param reachable is cell reachable? not a wall?
         """
-        self.reachable = reachable
-        self.value = value
-        self.x = x
-        self.y = y
+        self.boardState = boardState
         self.parent = None
         self.g = 0
         self.h = 0
         self.f = 0
+        
+    def boardStateString(self):
+        string = ""
+        for b in self.boardState:
+            string += str(b)
+            string += "\n"
+        return string
 
 class AStar(object):
     def __init__(self):
@@ -32,33 +33,34 @@ class AStar(object):
         # walls = ((0, 5), (1, 0), (1, 1), (1, 5), (2, 3), 
         #         (3, 1), (3, 2), (3, 5), (4, 1), (4, 4), (5, 1))
         # altered
-        start = ((7, 2  ,4),
-                 (5,None,6),
-                 (8, 3  ,1))
-        end   = ((None,1,2),
-                 (3,   4,5),
-                 (6,   7,8))
-        for x in range(self.grid_width):
-            for y in range(self.grid_height):
-                if (x, y) in start:
-                    reachable = False
-                else:
-                    reachable = True
-                self.cells.append(Cell(x, y, reachable, start[x][y]))
-        self.start = start
+        start = [[7,2,4],
+                 [5,0,6],
+                 [8,3,1]]
+        end   = [[0,1,2],
+                 [3,4,5],
+                 [6,7,8]]
+        self.start = Board(start)
         self.end = end
         print ("start", start)
         print ("end"  , end)
 
-    def get_heuristic(self, cell):
+    def get_heuristic(self, board):
         """
-        Compute the heuristic value H for a cell: distance between
-        this cell and the ending cell multiply by 10.
+        Compute the heuristic value H for a board:
+        Manhattan distance: for all tiles {abs(x_value - x_goal) + abs(y_value - y_goal)}
 
-        @param cell
+        @param board
         @returns heuristic value H
         """
-        return 10 * (abs(cell.x - self.end.x) + abs(cell.y - self.end.y))
+        total = 0
+        #print "board: \n" + board.boardStateString() 
+        for r in range (self.grid_height):
+            for c in range (self.grid_width):
+                goal_r, goal_c = self.index_of_tile (self.end, board.boardState[r][c])
+                tile_total = abs(r - goal_r) + abs(c - goal_c)
+                total += tile_total
+                #print "Tile " + str(board.boardState[r][c]) + " has H value of: " + str(tile_total)
+        return total
 
     def get_cell(self, x, y):
         """
@@ -70,24 +72,37 @@ class AStar(object):
         """
         return self.cells[x][y]
 
-    def index_of_free_tile (board):
+    def index_of_free_tile (self, boardState):
         """
         Returns the x,y index of the free tile in board.
 
         Board example:
                  ((7, 2  ,4),
-                 (5,None,6),
+                 (5,0,6),
                  (8, 3  ,1))
 
 
         @param board is a 2D board state
         @returns the x and y index of the free tile in board
         """
-        for r in board:
-            for c in x:
-                if c is None:
-                    return (r.index (c), c.index (None))
+        return self.index_of_tile (boardState, 0)
 
+    def index_of_tile (self, boardState, tile):
+        """
+        Returns the x,y index of the free tile in board.
+        
+        @param boardState is a 2D board state
+        @param tile is the value we are looking for
+        @returns the x and y index of the free tile in board
+        """
+        for r in range(3):
+            for c in range(3):
+                if boardState[r][c] == tile:
+                    return r, c
+    
+    def board_copy (self,board):
+        """ Return a copy of board """
+        return Board(list(list(b) for b in board.boardState))
 
     def get_next_boards(self, board):
         """
@@ -97,34 +112,51 @@ class AStar(object):
         @returns boards list 
         """
         boards = []
-        free   = index_of_free_tile (board)
-        if cell.x < self.grid_width-1:
-            cells.append(self.get_cell(cell.x+1, cell.y))
-        if cell.y > 0:
-            cells.append(self.get_cell(cell.x, cell.y-1))
-        if cell.x > 0:
-            cells.append(self.get_cell(cell.x-1, cell.y))
-        if cell.y < self.grid_height-1:
-            cells.append(self.get_cell(cell.x, cell.y+1))
-        return cells
+        free_row, free_column = self.index_of_free_tile (board.boardState)
+        #print "board before: \n" + board.boardStateString()
+        if free_column < self.grid_width-1:
+            copy1 = self.board_copy (board)
+            copy1.boardState[free_row][free_column] = board.boardState[free_row][free_column + 1]
+            copy1.boardState[free_row][free_column + 1] = 0
+            boards.append(copy1)
+        if free_row > 0:
+            copy2 = self.board_copy (board)
+            copy2.boardState[free_row][free_column] = board.boardState[free_row - 1][free_column]
+            copy2.boardState[free_row - 1][free_column] = 0
+            boards.append(copy2)
+        if free_column > 0:
+            copy3 = self.board_copy (board)
+            copy3.boardState[free_row][free_column] = board.boardState[free_row][free_column - 1]
+            copy3.boardState[free_row][free_column - 1] = 0
+            boards.append(copy3)
+        if free_row < self.grid_height-1:
+            copy4 = self.board_copy (board)
+            copy4.boardState[free_row][free_column] = board.boardState[free_row + 1][free_column]
+            copy4.boardState[free_row + 1][free_column] = 0
+            boards.append(copy4)
+        #print "get_next_boards board count = " + str(len(boards))
+        #print "board after: \n" + board.boardStateString()
+        #for b in boards:
+        #    print "next: \n" + b.boardStateString()
+        return boards
 
     def display_path(self):
-        cell = self.end
-        while cell.parent is not self.start:
-            cell = cell.parent
-            print 'path: cell: %d,%d' % (cell.x, cell.y)
+        board = self.end
+        while board.parent is not self.start:
+            board = board.parent
+            print 'path: board: %d,%d' % board.boardState
 
-    def compare(self, cell1, cell2):
+    def compare(self, board1, board2):
         """
-        Compare 2 cells F values
+        Compare 2 board F values
 
-        @param cell1 1st cell
-        @param cell2 2nd cell
+        @param board1 1st board
+        @param board2 2nd board
         @returns -1, 0 or 1 if lower, equal or greater
         """
-        if cell1.f < cell2.f:
+        if board1.f < board2.f:
             return -1
-        elif cell1.f > cell2.f:
+        elif board1.f > board2.f:
             return 1
         return 0
     
@@ -139,35 +171,61 @@ class AStar(object):
         adj.h = self.get_heuristic(adj)
         adj.parent = cell
         adj.f = adj.h + adj.g
+    
+    def update_board(self, nextBoard, board):
+        """
+        Update nextBoard
+
+        @param nextBoard next board from current board
+        @param board current board being processed
+        """
+        nextBoard.g = board.g + 10
+        nextBoard.h = self.get_heuristic(nextBoard)
+        nextBoard.parent = board
+        nextBoard.f = nextBoard.h + nextBoard.g
+        #print "Updating board...\nboard: \n" + board.boardStateString() + "\n next_board:\n " + nextBoard.boardStateString()
+
+    def board_in_list (self, board, list):
+        print "board_in_list"
+        print "board:\n " + board.boardStateString()
+        for b in list:
+            #print b.boardStateString()
+            if board.boardState == b.boardState:
+                return True
+        return False
 
     def process(self):
-        # add starting cell to open heap queue
+        # add starting board to open heap queue
         heapq.heappush(self.opened, (self.start.f, self.start))
         while len(self.opened):
-            # pop cell from heap queue 
-            f, cell = heapq.heappop(self.opened)
-            # add cell to closed list so we don't process it twice
-            self.closed.add(cell)
-            # if ending cell, display found path
-            if cell is self.end:
+            # pop board from heap queue 
+            f, board = heapq.heappop(self.opened)
+            # add board to closed list so we don't process it twice
+            self.closed.add(board)
+            # if ending board, display found path
+            if board.boardState is self.end:
                 self.display_path()
                 break
-            # get adjacent cells for cell
-            adj_cells = self.get_adjacent_cells(cell)
-            for adj_cell in adj_cells:
-                if adj_cell.reachable and adj_cell not in self.closed:
-                    if (adj_cell.f, adj_cell) in self.opened:
+            # get next boards for board
+            next_boards = self.get_next_boards(board)
+            # iterate over next_boards
+            for next_board in next_boards:
+                if not self.board_in_list (next_board, self.closed): # dont process a closed board #next_board not in self.closed: #
+                    if (next_board.f, next_board) in self.opened:
                         # if adj cell in open list, check if current path is
                         # better than the one previously found
                         # for this adj cell.
-                        if adj_cell.g > cell.g + 10:
-                            self.update_cell(adj_cell, cell)
+                        if next_board.g > board.g + 10:
+                            self.update_board(next_board, board)
                     else:
-                        self.update_cell(adj_cell, cell)
-                        # add adj cell to open list
-                        heapq.heappush(self.opened, (adj_cell.f, adj_cell))
+                        self.update_board(next_board, board)
+                        # add next board to open list
+                        heapq.heappush(self.opened, (next_board.f, next_board))
+                else:
+                    print ("next board in self.closed")
 
-a = AStar()
-a.init_grid()
-a.process()
+if __name__ == '__main__':
+    a = AStar()
+    a.init_grid()
+    a.process()
 
