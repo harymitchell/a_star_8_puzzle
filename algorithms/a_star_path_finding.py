@@ -27,8 +27,12 @@ class AStar(object):
         self.grid_width = 6
 
     def init_grid(self):
-        walls = ((0, 5), (1, 0), (1, 1), (1, 5), (2, 3), 
-                 (3, 1), (3, 2), (3, 5), (4, 1), (4, 4), (5, 1))
+        # original
+        #walls = ((0, 5), (1, 0), (1, 1), (1, 5), (2, 3), 
+        #         (3, 1), (3, 2), (3, 5), (4, 1), (4, 4), (5, 1))
+        # altered
+        walls = ((0, 1), (1, 1), (1, 3), (1, 4), (1, 5), 
+                 (2, 3), (3, 2), (4, 4), (5, 0), (5, 1), (5, 3))
         for x in range(self.grid_width):
             for y in range(self.grid_height):
                 if (x, y) in walls:
@@ -38,6 +42,8 @@ class AStar(object):
                 self.cells.append(Cell(x, y, reachable))
         self.start = self.get_cell(0, 0)
         self.end = self.get_cell(5, 5)
+        print ("start" , str(self.start.x), str(self.start.x))
+        print ("end" , str(self.end.x), str(self.end.x))
 
     def get_heuristic(self, cell):
         """
