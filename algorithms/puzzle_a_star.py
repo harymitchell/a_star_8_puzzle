@@ -33,12 +33,9 @@ class AStar(object):
         # start = [[7,2,4],#   I never waited for this one to finish,
         #          [5,0,6],#   if it is sovlable, my code is very inefficient, 
         #          [8,3,1]]#   defintely interested in some review.
-        # start  =[[4,2,8],  #
-        #          [6,1,3],  #  This one takes 17 moves, 20 seconds
-        #          [5,7,0]]  #
-        start  =[[1,2,3],  #
-                 [4,5,6],  #  This one takes 17 moves, 20 seconds
-                 [7,8,0]]  #
+        start  =[[4,2,8],  #
+                 [6,1,3],  #  This one takes 17 moves, 20 seconds
+                 [5,7,0]]  #
         end   = [[0,1,2],
                  [3,4,5],
                  [6,7,8]]
@@ -74,31 +71,15 @@ class AStar(object):
         Is start a solvable board?
         """
         inversions = 0
-        # for(var i:int=0;i<pList.length;i++){
-        #     for(var j:int=i+1;j<pList.length;j++){
-        #         if(pList[j]>pList[i]){
-        #             inversions++;
-        #         }
-        #     }
-        # }
         l = []
         for r in board.boardState:
             for c in r:
                 if c > 0:
                     l.append (c)
-        print l
         for i in l:
             for j in l:
                 if i > j and l.index(i) < l.index(j):
-                    print str(i) + " > " + str(j)
                     inversions += 1
-        # if(inversions%2 == 1){
-        #     trace("It's Unsolvable");
-        #     return false;
-        # }else{
-        #     trace("It's Solvable");
-        #     return true;
-        # }
         print "inversions: " + str(inversions)
         if self.grid_width%2 == 1 and inversions%2 == 1:
             return False
@@ -291,8 +272,6 @@ class AStar(object):
                         #print "next_board f =" + str(next_board.f)
                         # add next board to open list
                         heapq.heappush(self.opened, (next_board.f, next_board))
-                #else:
-                 #   print ("next board in self.closed")
 
 if __name__ == '__main__':
     a = AStar()
